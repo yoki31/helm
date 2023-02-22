@@ -1,6 +1,6 @@
 ;;; helm-global-bindings.el --- Bind global helm commands -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012 ~ 2021 Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2012 ~ 2023 Thierry Volpiatto 
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,14 +17,22 @@
 
 ;;; Code:
 
+(require 'helm-lib) ; For helm-aif (bug #2520).
+
 
 ;;; Command Keymap
 ;;
 ;;
-(defcustom helm-command-prefix-key "C-x c"
+(defgroup helm-global-bindings nil
+  "Global bindings for Helm."
+  :group 'helm)
+
+(defcustom helm-command-prefix-key
+  (helm-aif (car (where-is-internal 'Control-X-prefix (list global-map)))
+      (concat it [?c]))
   "The key `helm-command-prefix' is bound to in the global map."
   :type '(choice (string :tag "Key") (const :tag "no binding"))
-  :group 'helm-config
+  :group 'helm-global-bindings
   :set
   (lambda (var key)
     (when (and (boundp var) (symbol-value var))

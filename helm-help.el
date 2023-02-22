@@ -1,6 +1,6 @@
 ;;; helm-help.el --- Help messages for Helm. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012 ~ 2021 Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2012 ~ 2023 Thierry Volpiatto 
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -339,6 +339,9 @@ NOTE:
 When starting back narrowing i.e. entering something in minibuffer after \"/\" sorting is done
 again with fuzzy sorting and no more with sorting methods previously selected.
 
+You can use these sort functions only on files or directory,
+see [[Filter out files or directories][Filter out files or directories]].
+ 
 *** Find file at point
 
 Helm uses `ffap' partially or completely to find file at point depending on the
@@ -389,8 +392,8 @@ the cursor to the top instead of remaining on the previous subdir name.
 
 **** Enter `..name/' at end of pattern to start a recursive search
 
-It searches directories matching \"name\" under the current directory, see the
-\"Recursive completion on subdirectories\" section below for more details.
+It searches directories matching \"name\" under the current directory,
+see the [[Recursive completion on subdirectories][Recursive completion on subdirectories]] section below for more details.
 
 **** Any environment variable (e.g. `$HOME') at end of pattern gets expanded
 
@@ -408,10 +411,14 @@ It starts from the third character of the pattern.
 For instance \"fob\" or \"fbr\" will complete \"foobar\" but \"fb\" needs a
 third character in order to complete it.
 
-*** `\\[helm-execute-persistent-action]' on a filename expands to that filename in the Helm buffer
+*** Watch briefly files contents while navigating
 
-Second hit displays the buffer filename.
-Third hit kills the buffer filename.
+You can use `\\[helm-execute-persistent-action]' on a filename for this, then:
+
+- First hit expands to that filename in the Helm buffer.
+- Second hit displays the buffer filename.
+- Third hit kills the buffer filename.
+
 Note: `\\[universal-argument] \\[helm-execute-persistent-action]' displays the buffer directly.
 
 *** Browse images directories with `helm-follow-mode' and navigate up/down
@@ -561,14 +568,14 @@ You can use also a glob based search, in this case use the --glob option:
 
 *** Insert filename at point or complete filename at point
 
-On insertion (not on completion, i.e. there is nothing at point):
+On insertion (i.e. there is nothing at point):
 
 - `\\[helm-ff-run-complete-fn-at-point]': insert absolute file name.
 - `\\[universal-argument] \\[helm-ff-run-complete-fn-at-point]': insert abbreviated file name.
 - `\\[universal-argument] \\[universal-argument] \\[helm-ff-run-complete-fn-at-point]': insert relative file name.
 - `\\[universal-argument] \\[universal-argument] \\[universal-argument] \\[helm-ff-run-complete-fn-at-point]': insert basename.
 
-On completion:
+On completion (\\[helm-ff-run-complete-fn-at-point]):
 
 - Target starts with \"~/\": insert abbreviate file name.
 - target starts with \"/\" or \"[a-z]:/\": insert full path.
@@ -815,6 +822,15 @@ When `dired-async-mode' is enabled, an additional action named \"Backup files\"
 will be available. (Such command is not natively available in Emacs).
 See [[Use the wildcard to select multiple files]] for details.
 
+*** Multiple copies of a file
+
+The command \\<helm-find-files-map>\\[helm-ff-run-mcp] allows
+copying a single file to multiple directories. To use it, mark
+the file you want to copy first and then mark the directories
+where you want to copy file.  For example if you run
+\\[helm-ff-run-mcp] on the marked candidates '(\"foo.txt\" \"bar/\" \"baz\"),
+\"foo.txt\" will be copied to directories \"bar/\" and \"baz/\".
+
 *** Use Rsync to copy files
 
 If Rsync is available, you can use it to copy/sync files or directories
@@ -1040,17 +1056,23 @@ When using two prefix args, files are opened in background without beeing displa
 
 *** Expand archives as directories in a avfs directory
 
-If you have mounted your filesystem with mountavfs,
+If you have mounted your filesystem with 'mountavfs' command,
 you can expand archives in the \"~/.avfs\" directory with \\<helm-map>\\[helm-execute-persistent-action].
+
+To umount Avfs, use ~fusermount -u ~/.avfs~
+
+NOTE: You need the package 'avfs', on debian like distros use ~apt-get install avfs~.
 
 *** Tramp archive support (emacs-27+ only)
 
-If your emacs have library tramp-archive.el, you can browse the
-content of archives with emacs and BTW helm-find-files. However this beeing
-experimental and not very fast, helm doesn't provide an automatic
-expansion and detection of archives, you will have to add the final /
-manually and may have to force update (\\<helm-map>\\[helm-refresh])
-or remove and add again the final / until tramp finish decompressing archive.
+As Tramp archive often crash Helm and Emacs, Helm does its best
+to disable it, however it is hard to do so as Tramp Archive is
+enabled inconditionally in Emacs.  Here I build my Emacs
+without-dbus to ensure Tramp archive wont kickin unexpectedly.
+
+If you want to browse archives please use [[Expand archives as
+directories in a avfs directory][Avfs]] which is much better and
+stable.
 
 *** Touch files
 
@@ -1064,6 +1086,18 @@ To touch more than one new file, separate you filenames with a comma (\",\").
 If one wants to create (touch) a new file with comma inside the name use a prefix arg,
 this will prevent splitting the name and create multiple files.
 
+*** Change mode on files (chmod)
+
+When running `\\<helm-find-files-map>\\[helm-ff-run-chmod]' on
+marked files, you can enter the new mode in prompt but you can
+also use the first marked file as model to use it as default.
+For example you can mark a file with mode 777 and mark other
+files with mode 664, press 'RET' and answer 'y', all marked files
+will be changed to 777.
+
+NOTE: Another way to change modes on files in helm-find-files is
+running `\\<helm-find-files-map>\\[helm-ff-run-switch-to-shell]' and use 'chmod' directly.
+
 *** Delete files
 
 You can delete files without quitting helm with
@@ -1075,7 +1109,7 @@ make this command asynchronous by customizing
 
 _WARNING_: When deleting files asynchronously you will NOT be
 WARNED if directories are not empty, that's mean non empty directories will
-be deleted in background without asking.
+be deleted recursively in background without asking.
 
 A good compromise is to trash your files
 when using asynchronous method (see [[Trashing files][Trashing files]]).
@@ -1113,16 +1147,8 @@ Tip: Navigate to your Trash/files directories with `helm-find-files' and set a b
 there with \\<helm-find-files-map>\\[helm-ff-bookmark-set] for fast access to Trash.
 
 NOTE: Restoring files from trash is working only on system using
-the [[http://freedesktop.org/wiki/Specifications/trash-spec][freedesktop trash specifications]].
-
-_WARNING:_
-
-If you have an ENV var XDG_DATA_HOME in your .profile or .bash_profile
-and this var is set to something like $HOME/.local/share (like preconized)
-`move-file-to-trash' may try to create $HOME/.local/share/Trash (literally)
-and its subdirs in the directory where you are actually trying to trash files.
-because `move-file-to-trash' is interpreting XDG_DATA_HOME literally instead
-of evaling its value (with `substitute-in-file-name').
+the
+[[http://freedesktop.org/wiki/Specifications/trash-spec][freedesktop trash specifications]].
 
 ***** Trashing remote files with tramp
 
@@ -1133,15 +1159,15 @@ The package on most GNU/Linux based distributions is trash-cli, it is available 
 
 NOTE:
 When deleting your files with sudo method, your trashed files will not be listed
-with trash-list until you log in as root.
+with trash-list command line until you log in as root.
 
 *** Checksum file
 
 Checksum is calculated with the md5sum, sha1sum, sha224sum,
-sha256sum, sha384sum and sha512sum when available, otherwise the
+sha256sum, sha384sum and sha512sum commands when available, otherwise the
 Emacs function `secure-hash' is used but it is slow and may crash
 Emacs and even the whole system as it eats all memory.  So if
-your system doesn't have the md5 and sha command line tools be
+your system doesn't have the md5sum and sha*sum command line tools be
 careful when checking sum of larges files e.g. isos.
 
 *** Ignored or boring files
@@ -1167,6 +1193,11 @@ system doesn't support this, you can turn off file notifications
 by customizing the variable `helm-ff-use-notify'. In this case
 you will have to refresh manually directories when needed with `\\<helm-map>\\[helm-refresh]'.
 
+*** Prefix file candidates with icons
+
+If `all-the-icons' package is installed, turning on
+`helm-ff-icon-mode' will show icons before files and directories.
+
 ** Commands
 \\<helm-find-files-map>
 |Keys|Description
@@ -1184,12 +1215,14 @@ you will have to refresh manually directories when needed with `\\<helm-map>\\[h
 |\\[helm-ff-run-rename-file]|Rename Files (`\\[universal-argument]' to follow).
 |\\[helm-ff-run-query-replace-fnames-on-marked]|Query replace on marked files.
 |\\[helm-ff-run-copy-file]|Copy Files (`\\[universal-argument]' to follow).
+|\\[helm-ff-run-mcp]|Copy car of marked to remaining directories.
 |\\[helm-ff-run-rsync-file]|Rsync Files (`\\[universal-argument]' to edit command).
 |\\[helm-ff-run-byte-compile-file]|Byte Compile Files (`\\[universal-argument]' to load).
 |\\[helm-ff-run-load-file]|Load Files.
 |\\[helm-ff-run-symlink-file]|Symlink Files.
 |\\[helm-ff-run-hardlink-file]|Hardlink files.
 |\\[helm-ff-run-relsymlink-file]|Relative symlink Files.
+|\\[helm-ff-run-chmod]|Change mode on Files.
 |\\[helm-ff-run-delete-file]|Delete Files.
 |\\[helm-ff-run-touch-files]|Touch files.
 |\\[helm-ff-run-kill-buffer-persistent]|Kill buffer candidate without leaving Helm.
@@ -1208,6 +1241,7 @@ you will have to refresh manually directories when needed with `\\<helm-map>\\[h
 |\\[helm-ff-rotate-right-persistent]|Rotate image right.
 |\\[helm-ff-increase-image-size-persistent]|Zoom in image.
 |\\[helm-ff-decrease-image-size-persistent]|Zoom out image.
+|\\[helm-ff-toggle-thumbnails]|Show thumbnails on image files.
 |\\[helm-find-files-up-one-level]|Go to parent directory.
 |\\[helm-find-files-history]|Switch to the visited-directory history.
 |\\[helm-ff-file-name-history]|Switch to file name history.
@@ -1225,12 +1259,12 @@ you will have to refresh manually directories when needed with `\\<helm-map>\\[h
 |\\[helm-ff-run-insert-org-link]|Insert org link.
 |\\[helm-ff-bookmark-set]|Set bookmark to current directory.
 |\\[helm-find-files-switch-to-bookmark]|Jump to bookmark list.
-|\\[helm-ff-sort-alpha]|Sort alphabetically
-|\\[helm-ff-sort-by-newest]|Sort by newest
-|\\[helm-ff-sort-by-size]|Sort by size
-|\\[helm-ff-toggle-dirs-only]|Show only directories
-|\\[helm-ff-toggle-files-only]|Show only files
-|\\[helm-ff-toggle-thumbnails]|Show thumbnails on image files")
+|\\[helm-ff-sort-alpha]|Sort alphabetically.
+|\\[helm-ff-sort-by-newest]|Sort by newest.
+|\\[helm-ff-sort-by-size]|Sort by size.
+|\\[helm-ff-toggle-dirs-only]|Show only directories.
+|\\[helm-ff-toggle-files-only]|Show only files.
+|\\[helm-ff-sort-by-ext]|Sort by extensions.")
 
 ;;; Help for file-name-history
 ;;
@@ -1768,6 +1802,14 @@ See [[Commands][commands]] below.
 Once in that buffer you can use [[https://github.com/mhayashi1120/Emacs-wgrep][emacs-wgrep]] (external package not bundled with Helm)
 to edit your changes, for Helm the package name is `wgrep-helm', it is hightly recommended.
 
+Type `g' to update (revert) the buffer (after saving your buffer's changes to file).
+
+NOTE: `next-error' is available from this `helm-grep-mode' buffer.
+
+When you are running `next-error' from elsewhere, you can update
+the buffer with `helm-revert-next-error-last-buffer' (up to you
+to bind it to a convenient key).
+
 *** Helm-grep supports multi-matching
 
 \(Starting from version 1.9.4.)
@@ -1923,6 +1965,9 @@ leaving Helm.
 (defvar helm-bookmark-help-message
   "* Helm bookmark name
 
+When `helm-bookmark-use-icon' is non nil and `all-the-icons'
+package is installed icons before candidates will be displayed.
+ 
 ** Commands
 \\<helm-bookmark-map>
 |Keys|Description
@@ -2043,7 +2088,7 @@ your alias in the eshell alias file with e.g. \"alias foo $1 &\".
 |\\[helm-ff-run-delete-file]|Delete file.
 |\\[helm-ff-run-open-file-externally]|Open file externally.")
 
-;;; Moccur help
+;;; helm-occur help
 ;;
 ;;
 (defvar helm-moccur-help-message
@@ -2064,6 +2109,51 @@ Multiple regexp matching is allowed, simply enter a space to separate the regexp
 Matching empty lines is supported with the regexp \"^$\", you then get the
 results displayed as the buffer-name and the line number only.  You can
 save and edit these results, i.e. add text to the empty line.
+
+**** Matching shorthands symbols in Elisp code
+
+Helm-occur have a basic support of [[info:elisp#Shorthands][read-symbol-shorthands]].
+You can enable this by customizing =helm-occur-match-shorthands=.
+
+The main usage is when you are in a given buffer with cursor on a
+symbol and you want to see where the definition is or where it is
+used in another buffer or other buffers.  Of course matching is
+working on both versions of the definition, the short one and the
+long one.  Here an example reusing the sample files used in the
+Manual:
+
+Here snu.el file with cursor on snu-lines definition:
+
+#+begin_src elisp
+     (defun snu-split (separator s &optional omit-nulls)
+       \"A match-data saving variation on `split-string'.\"
+       (save-match-data (split-string s separator omit-nulls)))
+
+     (defun snu-lines (s)
+       \"Split string S into a list of strings on newline characters.\"
+       (snu-split \"\\\\(\\r\\n\\\\|[\\n\\r]\\\\)\" s))
+
+     ;; Local Variables:
+     ;; read-symbol-shorthands: ((\"snu-\" . \"some-nice-string-utils-\"))
+     ;; End:
+#+end_src
+
+And here the my-tricks.el file reusing snu-lines but under another name:
+
+#+begin_src elisp
+     (defun t-reverse-lines (s)
+       (string-join (reverse (sns-lines s)) \"\\n\"))
+
+     ;; Local Variables:
+     ;; read-symbol-shorthands: ((\"t-\" . \"my-tricks-\")
+     ;;                          (\"sns-\" . \"some-nice-string-utils-\"))
+     ;; End:
+
+#+end_src
+
+You want to know where the definition currently at point ('snu-lines') is used in the my-tricks.el buffer.
+You launch for example helm-mini and start helm-occur on my-tricks.el, helm occur will match immediately
+'sns-lines'.
 
 *** Automatically match symbol at point
 
@@ -2114,7 +2204,11 @@ This can be done automatically by customizing `helm-moccur-auto-update-on-resume
 
 *** Refresh a saved buffer
 
-Type `g' to update the buffer.
+Type `g' to update (revert) the buffer.
+
+When you are running `next-error' from elsewhere, you can update
+the buffer with `helm-revert-next-error-last-buffer' (up to you
+to bind it to a convenient key).
 
 *** Edit a saved buffer
 
@@ -2125,6 +2219,8 @@ First, install wgrep (https://github.com/mhayashi1120/Emacs-wgrep) and then:
 
 Tip: Use the excellent iedit (https://github.com/victorhge/iedit) to modify all
 occurences at once in the buffer.
+
+NOTE: `next-error' is available from this `helm-occur-mode' buffer.
 
 *** Search in region
 
@@ -2228,15 +2324,49 @@ marking it (`C-c u' or `RET') .
 
 ** Tips
 
-*** You can get help on any command with persistent action (\\<helm-map>\\[helm-execute-persistent-action])
+*** Display docstring without quitting session (persistent action)
+
+You can get help on any command with persistent action (\\<helm-map>\\[helm-execute-persistent-action])
+
+*** Display short docstring in helm buffer
+
+You can toggle short docstring description with \\<helm-M-x-map>\\[helm-M-x-toggle-short-doc].
+if you want this at startup you can configure `helm-M-x-show-short-doc'.
+
+NOTE: helm-M-x will be slower with this enabled.
+
+*** History source
+
+Helm-M-x is displaying two sources, one for the commands
+themselves and one for the command history, more exactly
+`extended-command-history', by default the history source is
+displayed in first position, however you can put it in second
+position if you don't like that by customizing
+`helm-M-x-reverse-history'.
+
+**** Duplicate entries in helm-M-x history
+
+helm-M-x history obey to history variables, if you have
+duplicates in your helm-M-x history set `history-delete-duplicates' to non nil.
+
+**** Number of entries in history
+
+The number of entries saved is controlled by `history-length'
+global value, however if you want a different value for
+`extended-command-history' e.g. 50 you can add to your config:
+
+    (put 'extended-command-history 'history-length 50)
+
+*** Enabled modes are highlighted in helm-M-x
 
 *** Prefix arguments
 
 You can pass prefix arguments *after* starting `helm-M-x'.  A mode-line
 counter will display the number of given prefix arguments.
 
-If you pass prefix arguments before running `helm-M-x', it will be displayed in the prompt.
-The first `\\[universal-argument]' after `helm-M-x' clears those prefix arguments.
+If you pass prefix arguments before running `helm-M-x', it will
+be displayed in the prompt.
+The first `\\<global-map>\\[universal-argument]' after `helm-M-x' clears those prefix arguments.
 
 NOTE: When you specify prefix arguments once `helm-M-x' is
 started, the prefix argument apply on the next command, so if you
@@ -2246,10 +2376,13 @@ prefix arg will apply to `self-insert-command' (e.g. if you type
 `C-u e' \"eeee\" will be inserted in prompt) so select the
 command you want to execute before specifying prefix arg.
 
-*** Duplicate entries in helm-M-x history
+** Commands
+\\<helm-M-x-map>
+|Keys|Description
+|-----------+------------|
+|\\[helm-M-x-universal-argument]|Universal argument for selected command
+|\\[helm-M-x-toggle-short-doc]|Toggle details on commands")
 
-helm-M-x history obey to history variables, if you have
-duplicates in your helm-M-x history set `history-delete-duplicates' to non nil.")
 
 ;;; Helm imenu
 ;;
